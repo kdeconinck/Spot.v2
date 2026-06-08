@@ -68,13 +68,46 @@ func (s *Scanner) Next() (token.Token, error) {
 		case nextByte == '}':
 			return token.New(token.RightBrace, position.NewRange(start, s.offset)), nil
 
+		case nextByte == '(':
+			return token.New(token.LeftParen, position.NewRange(start, s.offset)), nil
+
+		case nextByte == ')':
+			return token.New(token.RightParen, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '=':
+			return token.New(token.Equal, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '|':
+			return token.New(token.Pipe, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '*':
+			return token.New(token.Star, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '+':
+			return token.New(token.Plus, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '?':
+			return token.New(token.Question, position.NewRange(start, s.offset)), nil
+
+		case nextByte == ',':
+			return token.New(token.Comma, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '.':
+			return s.scanDotDot(start)
+
 		case nextByte == '"':
 			return s.scanString(start)
+
+		case nextByte == '\'':
+			return s.scanCharacter(start)
 
 		case nextByte == '/':
 			return s.scanLineComment(start)
 
-		case isIdentifierByte(nextByte):
+		case isNumberByte(nextByte):
+			return s.scanNumber(start)
+
+		case isIdentByte(nextByte):
 			return s.scanIdentifier(start, nextByte)
 
 		default:
@@ -84,62 +117,31 @@ func (s *Scanner) Next() (token.Token, error) {
 }
 
 func (s *Scanner) scanIdentifier(start position.Position, firstByteInput byte) (token.Token, error) {
-	switch firstByteInput {
-	case 's':
-		return s.scanKeyword(start, firstByteInput, "cope", token.Scope)
-
-	case 'i':
-		return s.scanKeyword(start, firstByteInput, "nclude", token.Include)
-
-	case 'e':
-		return s.scanKeyword(start, firstByteInput, "xclude", token.Exclude)
-
-	default:
-		return s.scanUnknownIdentifier([]byte{firstByteInput})
-	}
-}
-
-func (s *Scanner) scanKeyword(start position.Position, firstByteInput byte, suffixInput string, kindOutput token.Kind) (token.Token, error) {
 	identifierPrefixOutput := []byte{firstByteInput}
 
-	for _, wantByte := range suffixInput {
+	for {
 		nextByte, err := s.readByte()
 
 		switch {
 		case err == io.EOF:
-			return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected identifier %q.", string(identifierPrefixOutput))
+			return token.New(identifierKind(string(identifierPrefixOutput)), position.NewRange(start, s.offset)), nil
 
 		case err != nil:
 			return token.Token{}, err
 
-		case nextByte != byte(wantByte):
+		case isIdentBodyByte(nextByte):
+			identifierPrefixOutput = append(identifierPrefixOutput, nextByte)
+
+		case isNumberByte(nextByte):
 			identifierPrefixOutput = append(identifierPrefixOutput, nextByte)
 
 			return s.scanUnknownIdentifier(identifierPrefixOutput)
 
 		default:
-			identifierPrefixOutput = append(identifierPrefixOutput, nextByte)
+			s.unreadByte()
+
+			return token.New(identifierKind(string(identifierPrefixOutput)), position.NewRange(start, s.offset)), nil
 		}
-	}
-
-	nextByte, err := s.readByte()
-
-	switch {
-	case err == io.EOF:
-		return token.New(kindOutput, position.NewRange(start, s.offset)), nil
-
-	case err != nil:
-		return token.Token{}, err
-
-	case isIdentifierByte(nextByte):
-		identifierPrefixOutput = append(identifierPrefixOutput, nextByte)
-
-		return s.scanUnknownIdentifier(identifierPrefixOutput)
-
-	default:
-		s.unreadByte()
-
-		return token.New(kindOutput, position.NewRange(start, s.offset)), nil
 	}
 }
 
@@ -154,7 +156,7 @@ func (s *Scanner) scanUnknownIdentifier(identifierPrefixInput []byte) (token.Tok
 		case err != nil:
 			return token.Token{}, err
 
-		case !isIdentifierByte(nextByte):
+		case !isIdentBodyByte(nextByte) && !isNumberByte(nextByte):
 			return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected identifier %q.", string(identifierPrefixInput))
 
 		default:
@@ -226,6 +228,88 @@ func (s *Scanner) scanString(start position.Position) (token.Token, error) {
 	}
 }
 
+func (s *Scanner) scanCharacter(start position.Position) (token.Token, error) {
+	nextByte, err := s.readByte()
+
+	switch {
+	case err == io.EOF:
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unterminated character literal.")
+
+	case err != nil:
+		return token.Token{}, err
+
+	case nextByte == '\'':
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected character literal.")
+
+	case nextByte == '\\':
+		escapedByte, escapedErr := s.readByte()
+
+		switch {
+		case escapedErr == io.EOF:
+			return token.Token{}, fmt.Errorf("DSL Scanner: Unterminated character literal.")
+
+		case escapedErr != nil:
+			return token.Token{}, escapedErr
+
+		case !isEscapedByte(escapedByte):
+			return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected escape sequence %q.", "\\"+string(escapedByte))
+		}
+	}
+
+	closingByte, closingErr := s.readByte()
+
+	switch {
+	case closingErr == io.EOF:
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unterminated character literal.")
+
+	case closingErr != nil:
+		return token.Token{}, closingErr
+
+	case closingByte != '\'':
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected character literal.")
+
+	default:
+		return token.New(token.Character, position.NewRange(start, s.offset)), nil
+	}
+}
+
+func (s *Scanner) scanNumber(start position.Position) (token.Token, error) {
+	for {
+		nextByte, err := s.readByte()
+
+		switch {
+		case err == io.EOF:
+			return token.New(token.Number, position.NewRange(start, s.offset)), nil
+
+		case err != nil:
+			return token.Token{}, err
+
+		case !isNumberByte(nextByte):
+			s.unreadByte()
+
+			return token.New(token.Number, position.NewRange(start, s.offset)), nil
+		}
+	}
+}
+
+func (s *Scanner) scanDotDot(start position.Position) (token.Token, error) {
+	nextByte, err := s.readByte()
+
+	switch {
+	case err == io.EOF:
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected byte %q.", '.')
+
+	case err != nil:
+		return token.Token{}, err
+
+	case nextByte != '.':
+		return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected byte %q.", '.')
+
+	default:
+		return token.New(token.DotDot, position.NewRange(start, s.offset)), nil
+	}
+}
+
 func (s *Scanner) readByte() (byte, error) {
 	nextByte, err := s.reader.ReadByte()
 
@@ -263,4 +347,25 @@ func isEscapedByte(valueInput byte) bool {
 	}
 }
 
-func isIdentifierByte(valueInput byte) bool { return valueInput >= 'a' && valueInput <= 'z' }
+func isIdentByte(valueInput byte) bool     { return valueInput >= 'a' && valueInput <= 'z' }
+func isIdentBodyByte(valueInput byte) bool { return isIdentByte(valueInput) || valueInput == '_' }
+func isNumberByte(valueInput byte) bool    { return valueInput >= '0' && valueInput <= '9' }
+
+func identifierKind(identifierInput string) token.Kind {
+	switch identifierInput {
+	case "scope":
+		return token.Scope
+
+	case "charset":
+		return token.Charset
+
+	case "include":
+		return token.Include
+
+	case "exclude":
+		return token.Exclude
+
+	default:
+		return token.Identifier
+	}
+}
