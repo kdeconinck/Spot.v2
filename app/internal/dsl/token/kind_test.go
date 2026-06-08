@@ -42,6 +42,11 @@ func Test_Kind_String(t *testing.T) {
 			want:      "charset",
 		},
 		{
+			name:      "When using the lexer token kind, the returned string is correct.",
+			kindInput: token.Lexer,
+			want:      "lexer",
+		},
+		{
 			name:      "When using the include token kind, the returned string is correct.",
 			kindInput: token.Include,
 			want:      "include",

@@ -359,6 +359,9 @@ func identifierKind(identifierInput string) token.Kind {
 	case "charset":
 		return token.Charset
 
+	case "lexer":
+		return token.Lexer
+
 	case "include":
 		return token.Include
 

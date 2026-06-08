@@ -19,6 +19,7 @@ const (
 	// Keywords.
 	Scope
 	Charset
+	Lexer
 	Include
 	Exclude
 	Identifier
@@ -59,6 +60,9 @@ func (kind Kind) String() string {
 
 	case Charset:
 		return "charset"
+
+	case Lexer:
+		return "lexer"
 
 	case Include:
 		return "include"
