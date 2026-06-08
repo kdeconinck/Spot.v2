@@ -68,15 +68,19 @@ func Test_Scanner_Next(t *testing.T) {
 		wantErrorOutput    string
 	}{
 		{
-			name:               "When scanning scope input with a comment, the returned tokens are correct.",
-			textInput:          "scope {\n  // comment\n}",
-			amountOfCallsInput: 5,
+			name:               "When scanning valid input, the returned tokens are correct.",
+			textInput:          "scope {\n  include \"**/*.txt\"\n  exclude \"**/vendor/**\"\n  // comment\n}",
+			amountOfCallsInput: 9,
 			wantTokensOutput: []token.Token{
 				newToken(token.Scope, 0, 5),
 				newToken(token.LeftBrace, 6, 7),
-				newToken(token.LineComment, 10, 20),
-				newToken(token.RightBrace, 21, 22),
-				newToken(token.EndOfFile, 22, 22),
+				newToken(token.Include, 10, 17),
+				newToken(token.String, 18, 28),
+				newToken(token.Exclude, 31, 38),
+				newToken(token.String, 39, 53),
+				newToken(token.LineComment, 56, 66),
+				newToken(token.RightBrace, 67, 68),
+				newToken(token.EndOfFile, 68, 68),
 			},
 		},
 		{
@@ -144,6 +148,33 @@ func Test_Scanner_Next(t *testing.T) {
 				newToken(token.LineComment, 0, 10),
 				newToken(token.EndOfFile, 10, 10),
 			},
+		},
+		{
+			name:               "When scanning a string with supported escapes, the returned token is correct.",
+			textInput:          "\"a\\\"b\\\\c\\nd\\re\\tf\"",
+			amountOfCallsInput: 2,
+			wantTokensOutput: []token.Token{
+				newToken(token.String, 0, 18),
+				newToken(token.EndOfFile, 18, 18),
+			},
+		},
+		{
+			name:               "When scanning an unterminated string, the returned error is correct.",
+			textInput:          "\"abc",
+			amountOfCallsInput: 1,
+			wantErrorOutput:    "DSL Scanner: Unterminated string literal.",
+		},
+		{
+			name:               "When scanning a string that ends after an escape prefix, the returned error is correct.",
+			textInput:          "\"\\",
+			amountOfCallsInput: 1,
+			wantErrorOutput:    "DSL Scanner: Unterminated string literal.",
+		},
+		{
+			name:               "When scanning a string with an unsupported escape, the returned error is correct.",
+			textInput:          "\"\\x\"",
+			amountOfCallsInput: 1,
+			wantErrorOutput:    "DSL Scanner: Unexpected escape sequence \"\\\\x\".",
 		},
 		{
 			name:               "When scanning empty input repeatedly, the returned end of file token is stable.",
@@ -219,6 +250,20 @@ func Test_Scanner_Next_ReaderError(t *testing.T) {
 		{
 			name:                   "When the input reader fails while scanning an unknown identifier, the returned error is propagated.",
 			readerInput:            newErrorAfterNReader("unknown", 3, errors.New("boom")),
+			amountOfTokensInput:    1,
+			wantHasErrorOutput:     true,
+			wantErrorMessageOutput: "boom",
+		},
+		{
+			name:                   "When the input reader fails while scanning string contents, the returned error is propagated.",
+			readerInput:            newErrorAfterNReader("\"a", 2, errors.New("boom")),
+			amountOfTokensInput:    1,
+			wantHasErrorOutput:     true,
+			wantErrorMessageOutput: "boom",
+		},
+		{
+			name:                   "When the input reader fails while scanning an escaped byte in a string, the returned error is propagated.",
+			readerInput:            newErrorAfterNReader("\"\\", 2, errors.New("boom")),
 			amountOfTokensInput:    1,
 			wantHasErrorOutput:     true,
 			wantErrorMessageOutput: "boom",
@@ -329,7 +374,7 @@ func benchmarkText(blockCountInput int) string {
 	var sb strings.Builder
 
 	for range blockCountInput {
-		sb.WriteString("scope {\n  // comment\n}\n")
+		sb.WriteString("scope {\n  include \"**/*.txt\"\n  exclude \"**/vendor/**\"\n  // comment\n}\n")
 	}
 
 	return sb.String()

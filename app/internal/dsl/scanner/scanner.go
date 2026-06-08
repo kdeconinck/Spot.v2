@@ -68,6 +68,9 @@ func (s *Scanner) Next() (token.Token, error) {
 		case nextByte == '}':
 			return token.New(token.RightBrace, position.NewRange(start, s.offset)), nil
 
+		case nextByte == '"':
+			return s.scanString(start)
+
 		case nextByte == '/':
 			return s.scanLineComment(start)
 
@@ -81,18 +84,30 @@ func (s *Scanner) Next() (token.Token, error) {
 }
 
 func (s *Scanner) scanIdentifier(start position.Position, firstByteInput byte) (token.Token, error) {
-	if firstByteInput != 's' {
+	switch firstByteInput {
+	case 's':
+		return s.scanKeyword(start, firstByteInput, "cope", token.Scope)
+
+	case 'i':
+		return s.scanKeyword(start, firstByteInput, "nclude", token.Include)
+
+	case 'e':
+		return s.scanKeyword(start, firstByteInput, "xclude", token.Exclude)
+
+	default:
 		return s.scanUnknownIdentifier([]byte{firstByteInput})
 	}
+}
 
-	identifierPrefixOutput := []byte{'s'}
+func (s *Scanner) scanKeyword(start position.Position, firstByteInput byte, suffixInput string, kindOutput token.Kind) (token.Token, error) {
+	identifierPrefixOutput := []byte{firstByteInput}
 
-	for _, wantByte := range "cope" {
+	for _, wantByte := range suffixInput {
 		nextByte, err := s.readByte()
 
 		switch {
 		case err == io.EOF:
-			return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected identifier %q.", "scope"[:int(s.offset-start)])
+			return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected identifier %q.", string(identifierPrefixOutput))
 
 		case err != nil:
 			return token.Token{}, err
@@ -111,7 +126,7 @@ func (s *Scanner) scanIdentifier(start position.Position, firstByteInput byte) (
 
 	switch {
 	case err == io.EOF:
-		return token.New(token.Scope, position.NewRange(start, s.offset)), nil
+		return token.New(kindOutput, position.NewRange(start, s.offset)), nil
 
 	case err != nil:
 		return token.Token{}, err
@@ -124,7 +139,7 @@ func (s *Scanner) scanIdentifier(start position.Position, firstByteInput byte) (
 	default:
 		s.unreadByte()
 
-		return token.New(token.Scope, position.NewRange(start, s.offset)), nil
+		return token.New(kindOutput, position.NewRange(start, s.offset)), nil
 	}
 }
 
@@ -180,6 +195,37 @@ func (s *Scanner) scanLineComment(start position.Position) (token.Token, error) 
 	}
 }
 
+func (s *Scanner) scanString(start position.Position) (token.Token, error) {
+	for {
+		nextByte, err := s.readByte()
+
+		switch {
+		case err == io.EOF:
+			return token.Token{}, fmt.Errorf("DSL Scanner: Unterminated string literal.")
+
+		case err != nil:
+			return token.Token{}, err
+
+		case nextByte == '"':
+			return token.New(token.String, position.NewRange(start, s.offset)), nil
+
+		case nextByte == '\\':
+			escapedByte, escapedErr := s.readByte()
+
+			switch {
+			case escapedErr == io.EOF:
+				return token.Token{}, fmt.Errorf("DSL Scanner: Unterminated string literal.")
+
+			case escapedErr != nil:
+				return token.Token{}, escapedErr
+
+			case !isEscapedByte(escapedByte):
+				return token.Token{}, fmt.Errorf("DSL Scanner: Unexpected escape sequence %q.", "\\"+string(escapedByte))
+			}
+		}
+	}
+}
+
 func (s *Scanner) readByte() (byte, error) {
 	nextByte, err := s.reader.ReadByte()
 
@@ -200,6 +246,16 @@ func (s *Scanner) unreadByte() {
 func isWhitespace(valueInput byte) bool {
 	switch valueInput {
 	case ' ', '\t', '\n', '\r':
+		return true
+
+	default:
+		return false
+	}
+}
+
+func isEscapedByte(valueInput byte) bool {
+	switch valueInput {
+	case '"', '\\', 'n', 'r', 't':
 		return true
 
 	default:

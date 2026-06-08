@@ -18,10 +18,15 @@ const (
 
 	// Keywords.
 	Scope
+	Include
+	Exclude
 
 	// Symbols.
 	LeftBrace
 	RightBrace
+
+	// Literals.
+	String
 
 	// Trivia.
 	LineComment
@@ -39,11 +44,20 @@ func (kind Kind) String() string {
 	case Scope:
 		return "scope"
 
+	case Include:
+		return "include"
+
+	case Exclude:
+		return "exclude"
+
 	case LeftBrace:
 		return "left-brace"
 
 	case RightBrace:
 		return "right-brace"
+
+	case String:
+		return "string"
 
 	case LineComment:
 		return "line-comment"

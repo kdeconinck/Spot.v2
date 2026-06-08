@@ -37,6 +37,16 @@ func Test_Kind_String(t *testing.T) {
 			want:      "scope",
 		},
 		{
+			name:      "When using the include token kind, the returned string is correct.",
+			kindInput: token.Include,
+			want:      "include",
+		},
+		{
+			name:      "When using the exclude token kind, the returned string is correct.",
+			kindInput: token.Exclude,
+			want:      "exclude",
+		},
+		{
 			name:      "When using the left brace token kind, the returned string is correct.",
 			kindInput: token.LeftBrace,
 			want:      "left-brace",
@@ -45,6 +55,11 @@ func Test_Kind_String(t *testing.T) {
 			name:      "When using the right brace token kind, the returned string is correct.",
 			kindInput: token.RightBrace,
 			want:      "right-brace",
+		},
+		{
+			name:      "When using the string token kind, the returned string is correct.",
+			kindInput: token.String,
+			want:      "string",
 		},
 		{
 			name:      "When using the line comment token kind, the returned string is correct.",
