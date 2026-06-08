@@ -20,7 +20,9 @@ import (
 // Labels, used in the different assertion methods.
 const (
 	HasErrorLabel = "Has error?"
+	ErrorLabel    = "Error"
 	TokenLabel    = "Token"
+	TokensLabel   = "Tokens"
 )
 
 func Test_New(t *testing.T) {
@@ -406,19 +408,19 @@ func Test_Scanner_Next(t *testing.T) {
 			gotTokensOutput, gotErrorOutput := collectTokens(scn, testCase.amountOfCallsInput)
 
 			// Assert.
-			claim.Equal(t, testCase.name, len(testCase.wantTokensOutput), len(gotTokensOutput), "Amount of tokens")
+			nWantTokensOutput := normalizeTokens(testCase.wantTokensOutput)
+			nGotTokensOutput := normalizeTokens(gotTokensOutput)
 
-			for tokenIndex := range gotTokensOutput {
-				claim.Equal(t, testCase.name, testCase.wantTokensOutput[tokenIndex], gotTokensOutput[tokenIndex], "Token")
-			}
+			claim.DeepEqual(t, testCase.name, nWantTokensOutput, nGotTokensOutput, TokensLabel)
 
 			if testCase.wantErrorOutput == "" {
-				claim.Equal(t, testCase.name, true, gotErrorOutput == nil, "Has no error?")
+				claim.Equal(t, testCase.name, false, gotErrorOutput != nil, HasErrorLabel)
+
 				return
 			}
 
-			claim.Equal(t, testCase.name, false, gotErrorOutput == nil, "Has error?")
-			claim.Equal(t, testCase.name, testCase.wantErrorOutput, gotErrorOutput.Error(), "Error")
+			claim.Equal(t, testCase.name, false, gotErrorOutput == nil, HasErrorLabel)
+			claim.Equal(t, testCase.name, testCase.wantErrorOutput, gotErrorOutput.Error(), ErrorLabel)
 		})
 	}
 }
@@ -548,16 +550,14 @@ func Test_Scanner_Next_ReaderError(t *testing.T) {
 			gotTokensOutput, gotErrorOutput := collectTokens(scn, testCase.amountOfTokensInput)
 
 			// Assert.
-			claim.Equal(t, testCase.name, len(testCase.wantTokensOutput), len(gotTokensOutput), "Amount of tokens")
+			nWantTokensOutput := normalizeTokens(testCase.wantTokensOutput)
+			nGotTokensOutput := normalizeTokens(gotTokensOutput)
 
-			for tokenIndex := range gotTokensOutput {
-				claim.Equal(t, testCase.name, testCase.wantTokensOutput[tokenIndex], gotTokensOutput[tokenIndex], "Token")
-			}
-
-			claim.Equal(t, testCase.name, testCase.wantHasErrorOutput, gotErrorOutput != nil, "Has error?")
+			claim.DeepEqual(t, testCase.name, nWantTokensOutput, nGotTokensOutput, TokensLabel)
+			claim.Equal(t, testCase.name, testCase.wantHasErrorOutput, gotErrorOutput != nil, HasErrorLabel)
 
 			if gotErrorOutput != nil {
-				claim.Equal(t, testCase.name, testCase.wantErrorMessageOutput, gotErrorOutput.Error(), "Error")
+				claim.Equal(t, testCase.name, testCase.wantErrorMessageOutput, gotErrorOutput.Error(), ErrorLabel)
 			}
 		})
 	}
@@ -588,6 +588,7 @@ func benchmark_Scanner_Next(b *testing.B, blockCountInput int) {
 
 		for {
 			nextToken, err := scn.Next()
+
 			if err != nil {
 				b.Fatalf("Next() returned an unexpected error: %v.", err)
 			}
@@ -618,6 +619,14 @@ func collectTokens(scannerInput *scanner.Scanner, amountOfTokensInput int) ([]to
 	}
 
 	return tokensOutput, nil
+}
+
+func normalizeTokens(tokensInput []token.Token) []token.Token {
+	if tokensInput == nil {
+		return []token.Token{}
+	}
+
+	return tokensInput
 }
 
 func benchmarkText(blockCountInput int) string {
