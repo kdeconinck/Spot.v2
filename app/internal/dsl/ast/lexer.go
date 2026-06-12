@@ -16,6 +16,5 @@ type Lexer struct {
 // LexerRule represents a named lexer rule.
 type LexerRule struct {
 	Range position.Range
-	Name  string
 	Value Expression
 }

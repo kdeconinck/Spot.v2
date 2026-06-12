@@ -10,7 +10,6 @@ import "github.com/kdeconinck/spot/internal/position"
 // Reference represents a named reference in an expression.
 type Reference struct {
 	Range position.Range
-	Name  string
 }
 
 func (Reference) isExpression() {
@@ -20,7 +19,6 @@ func (Reference) isExpression() {
 // StringLiteral represents a string literal expression.
 type StringLiteral struct {
 	Range position.Range
-	Value string
 }
 
 func (StringLiteral) isExpression() {
@@ -30,7 +28,6 @@ func (StringLiteral) isExpression() {
 // CharacterLiteral represents a character literal expression.
 type CharacterLiteral struct {
 	Range position.Range
-	Value rune
 }
 
 func (CharacterLiteral) isExpression() {

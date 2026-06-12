@@ -25,21 +25,18 @@ func Test_Expression(t *testing.T) {
 			name: "When using a reference expression, it is assignable to the expression interface.",
 			expressionInput: ast.Reference{
 				Range: newRange(0, 5),
-				Name:  "space",
 			},
 		},
 		{
 			name: "When using a string literal expression, it is assignable to the expression interface.",
 			expressionInput: ast.StringLiteral{
 				Range: newRange(5, 13),
-				Value: "public",
 			},
 		},
 		{
 			name: "When using a character literal expression, it is assignable to the expression interface.",
 			expressionInput: ast.CharacterLiteral{
 				Range: newRange(13, 17),
-				Value: '\t',
 			},
 		},
 		{
@@ -47,9 +44,9 @@ func Test_Expression(t *testing.T) {
 			expressionInput: ast.CharacterRange{
 				Range: newRange(17, 25),
 				Start: ast.CharacterLiteral{
-					Range: newRange(17, 20), Value: 'a'},
+					Range: newRange(17, 20)},
 				End: ast.CharacterLiteral{
-					Range: newRange(22, 25), Value: 'z'},
+					Range: newRange(22, 25)},
 			},
 		},
 		{
@@ -58,9 +55,9 @@ func Test_Expression(t *testing.T) {
 				Range: newRange(25, 36),
 				Expressions: []ast.Expression{
 					ast.Reference{
-						Range: newRange(25, 31), Name: "letter"},
+						Range: newRange(25, 31)},
 					ast.Reference{
-						Range: newRange(34, 36), Name: "id"},
+						Range: newRange(34, 36)},
 				},
 			},
 		},
@@ -70,9 +67,9 @@ func Test_Expression(t *testing.T) {
 				Range: newRange(36, 52),
 				Expressions: []ast.Expression{
 					ast.Reference{
-						Range: newRange(36, 47), Name: "ident_start"},
+						Range: newRange(36, 47)},
 					ast.Reference{
-						Range: newRange(48, 52), Name: "tail"},
+						Range: newRange(48, 52)},
 				},
 			},
 		},
@@ -81,7 +78,7 @@ func Test_Expression(t *testing.T) {
 			expressionInput: ast.Repetition{
 				Range: newRange(52, 63),
 				Expression: ast.Reference{
-					Range: newRange(52, 57), Name: "space"},
+					Range: newRange(52, 57)},
 				Minimum: 1,
 				Maximum: nil,
 			},
@@ -91,7 +88,7 @@ func Test_Expression(t *testing.T) {
 			expressionInput: ast.Repetition{
 				Range: newRange(63, 79),
 				Expression: ast.Reference{
-					Range: newRange(63, 74), Name: "ident_part"},
+					Range: newRange(63, 74)},
 				Minimum: 1,
 				Maximum: &boundedMaximum,
 			},

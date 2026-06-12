@@ -16,6 +16,5 @@ type Charset struct {
 // CharsetMember represents a named charset declaration.
 type CharsetMember struct {
 	Range position.Range
-	Name  string
 	Value Expression
 }
