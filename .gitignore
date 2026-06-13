@@ -2,3 +2,6 @@
 # == LICENSE:                 Copyright (c) 2026 Kevin De Coninck.
 # == SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 # ======================================================================================================================
+
+# JetBrains GoLand '.idea/' folder.
+/.idea/
