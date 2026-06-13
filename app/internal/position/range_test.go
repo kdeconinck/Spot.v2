@@ -3,6 +3,7 @@
 // == SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 // =====================================================================================================================
 
+// Verify the public API of the position package.
 package position_test
 
 import (
@@ -20,7 +21,7 @@ func Test_NewRange(t *testing.T) {
 		endInput   position.Position
 		want       position.Range
 	}{
-		"When creating a range, the returned range preserves both endpoints.": {
+		"When creating a range, the returned value is correct.": {
 			startInput: position.NewPosition(3),
 			endInput:   position.NewPosition(8),
 			want: position.Range{
@@ -50,31 +51,31 @@ func Test_Range_IsValid(t *testing.T) {
 		want       bool
 	}{
 		{
-			name: "When the range has increasing endpoints, the returned value is true.",
+			name: "When the range has increasing endpoints, the returned value is correct.",
 			rangeInput: position.NewRange(
 				position.NewPosition(2),
 				position.NewPosition(5)),
 			want: true,
 		},
 		{
-			name: "When the range is empty, the returned value is true.",
+			name: "When the range is empty, the returned value is correct.",
 			rangeInput: position.NewRange(
 				position.NewPosition(4),
 				position.NewPosition(4)),
 			want: true,
 		},
 		{
-			name:       "When the range start is invalid, the returned value is false.",
+			name:       "When the range start is invalid, the returned value is correct.",
 			rangeInput: position.NewRange(position.NewPosition(-1), position.NewPosition(4)),
 			want:       false,
 		},
 		{
-			name:       "When the range end is invalid, the returned value is false.",
+			name:       "When the range end is invalid, the returned value is correct.",
 			rangeInput: position.NewRange(position.NewPosition(1), position.NewPosition(-1)),
 			want:       false,
 		},
 		{
-			name: "When the range end precedes the start, the returned value is false.",
+			name: "When the range end precedes the start, the returned value is correct.",
 			rangeInput: position.NewRange(
 				position.NewPosition(5),
 				position.NewPosition(2)),

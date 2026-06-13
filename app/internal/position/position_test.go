@@ -28,11 +28,11 @@ func Test_NewPosition(t *testing.T) {
 		offsetInput position.Position
 		want        position.Position
 	}{
-		"When the offset is non-negative, the returned position is correct.": {
+		"When the offset is non-negative, the returned value is correct.": {
 			offsetInput: 7,
 			want:        position.Position(7),
 		},
-		"When the offset is negative, the invalid position sentinel is returned.": {
+		"When the offset is negative, the returned value is correct.": {
 			offsetInput: -1,
 			want:        position.InvalidPosition,
 		},
@@ -58,22 +58,22 @@ func Test_Position_IsValid(t *testing.T) {
 		want          bool
 	}{
 		{
-			name:          "When the position is invalid, the returned value is false.",
+			name:          "When the position is invalid, the returned value is correct.",
 			positionInput: position.NewPosition(-1),
 			want:          false,
 		},
 		{
-			name:          "When the position is zero, the returned value is true.",
+			name:          "When the position is zero, the returned value is correct.",
 			positionInput: position.NewPosition(0),
 			want:          true,
 		},
 		{
-			name:          "When the position is positive, the returned value is true.",
+			name:          "When the position is positive, the returned value is correct.",
 			positionInput: position.NewPosition(9),
 			want:          true,
 		},
 		{
-			name:          "When the position is the invalid position sentinel, the returned value is false.",
+			name:          "When the position is the invalid position sentinel, the returned value is correct.",
 			positionInput: position.InvalidPosition,
 			want:          false,
 		},

@@ -9,10 +9,11 @@ package position
 // Position identifies a byte offset in source text.
 type Position int
 
-// InvalidPosition is a sentinel for an invalid source position.
+// InvalidPosition represents an invalid source position.
 const InvalidPosition Position = -1
 
-// NewPosition returns a position for offset.
+// NewPosition returns the position for offset.
+// It returns InvalidPosition if offset is negative.
 func NewPosition(offset int) Position {
 	if offset < 0 {
 		return InvalidPosition

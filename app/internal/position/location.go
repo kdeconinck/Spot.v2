@@ -8,6 +8,9 @@ package position
 
 // Location identifies a 1-based line and byte column.
 type Location struct {
-	Line   int
+	// Line is the 1-based line number.
+	Line int
+
+	// Column is the 1-based byte column number.
 	Column int
 }

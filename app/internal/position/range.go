@@ -8,11 +8,14 @@ package position
 
 // Range identifies a half-open source interval [Start, End).
 type Range struct {
+	// Start is the first position in the range.
 	Start Position
-	End   Position
+
+	// End is the first position after the range.
+	End Position
 }
 
-// NewRange returns the range from start to end.
+// NewRange returns the half-open range [start, end).
 func NewRange(start, end Position) Range {
 	return Range{
 		Start: start,
