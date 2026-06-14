@@ -3,7 +3,7 @@
 // == SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 // =====================================================================================================================
 
-// Package ansi provides utilities for working with ANSI escape codes.
+// Package ansi provides helpers for building ANSI SGR escape sequences.
 package ansi
 
 import (
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Code is a single ANSI formatting code.
+// Code is a single ANSI SGR formatting code.
 type Code uint8
 
 const (
@@ -26,14 +26,13 @@ const (
 	Green Code = 32
 )
 
-// Sequence is a precomputed ANSI escape sequence.
-// It is safe to reuse across calls and avoids rebuilding the ANSI opening sequence every time the caller needs to
-// append it.
+// Sequence is a precomputed ANSI SGR opening escape sequence.
+// It is safe to reuse across calls and avoids rebuilding the opening sequence each time the caller appends it.
 type Sequence struct {
 	open string
 }
 
-// NewSequence returns a reusable ANSI sequence for the provided codes.
+// NewSequence returns a reusable ANSI SGR opening sequence for codes.
 func NewSequence(codes []Code) Sequence {
 	if len(codes) == 0 {
 		return Sequence{
@@ -89,8 +88,8 @@ func (seq Sequence) WriteResetTo(builder *strings.Builder) {
 	builder.WriteString(ansiResetSuffix)
 }
 
-// String returns the ANSI escape code value for code.
-// The returned string corresponds to the numeric portion of an ANSI control sequence (e.g. "31" for red, ...).
+// String returns the decimal SGR code for code.
+// The returned string is the numeric portion of an ANSI SGR sequence, such as "31" for red.
 func (code Code) String() string {
 	switch code {
 	case Reset:

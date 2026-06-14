@@ -131,6 +131,10 @@ func Test_WriteOpenTo(t *testing.T) {
 		"When using NO ANSI code(s), nothing is appended.": {
 			want: "",
 		},
+		"When using an empty ANSI code slice, nothing is appended.": {
+			inCodes: []ansi.Code{},
+			want:    "",
+		},
 		"When using a single ANSI code, the correct value is appended": {
 			inCodes: []ansi.Code{
 				ansi.Green,
@@ -175,67 +179,77 @@ func Test_WriteOpenTo(t *testing.T) {
 	}
 }
 
+func Test_Sequence_WriteOpenTo_Appends(t *testing.T) {
+	t.Parallel()
+
+	// Arrange.
+	var sb strings.Builder
+	sb.WriteString("prefix:")
+
+	seq := ansi.NewSequence([]ansi.Code{
+		ansi.Green,
+	})
+
+	// Act.
+	seq.WriteOpenTo(&sb)
+
+	// Assert.
+	claim.Equal(t, "When appending a opening sequence to a non-empty builder, the correct value is appended.", "prefix:\x1b[32m", sb.String(), AnsiEscapeSequence)
+}
+
 func Test_WriteResetTo(t *testing.T) {
 	t.Parallel()
 
-	// Arrange.
-	seq := ansi.NewSequence([]ansi.Code{ansi.Green})
-	var sb strings.Builder
+	for tcName, tc := range map[string]struct {
+		inCodes []ansi.Code
+		want    string
+	}{
+		"When appending the ANSI reset sequence for a non-empty sequence, the correct value is appended.": {
+			inCodes: []ansi.Code{
+				ansi.Green,
+			},
+			want: "\x1b[0m",
+		},
+		"When appending the ANSI reset sequence for an empty sequence, nothing is appended.": {
+			want: "",
+		},
+		"When appending the ANSI reset sequence for an empty ANSI code slice, nothing is appended.": {
+			inCodes: []ansi.Code{},
+			want:    "",
+		},
+	} {
+		t.Run(tcName, func(t *testing.T) {
+			t.Parallel()
 
-	// Act.
-	seq.WriteResetTo(&sb)
+			// Arrange.
+			var sb strings.Builder
+			seq := ansi.NewSequence(tc.inCodes)
 
-	// Assert.
-	claim.Equal(t, "When appending the ANSI reset sequence, the correct value is appended.", "\x1b[0m", sb.String(), AnsiEscapeSequence)
+			// Act.
+			seq.WriteResetTo(&sb)
+
+			// Assert.
+			claim.Equal(t, tcName, tc.want, sb.String(), AnsiEscapeSequence)
+		})
+	}
 }
 
-func Test_Sequence_WriteOpenTo(t *testing.T) {
+func Test_Sequence_WriteResetTo_Appends(t *testing.T) {
 	t.Parallel()
 
 	// Arrange.
-	var dst strings.Builder
+	var sb strings.Builder
+	sb.WriteString("prefix:")
 
 	seq := ansi.NewSequence([]ansi.Code{
 		ansi.Green,
 	})
 
 	// Act.
-	seq.WriteOpenTo(&dst)
-
-	// Assert.
-	claim.Equal(t, "When appending a cached sequence to bytes, the correct value is appended.", "\x1b[32m", dst.String(), AnsiEscapeSequence)
-}
-
-func Test_Sequence_WriteResetTo(t *testing.T) {
-	t.Parallel()
-
-	// Arrange.
-	var sb strings.Builder
-
-	seq := ansi.NewSequence([]ansi.Code{
-		ansi.Green,
-	})
-
-	// Act.
 	seq.WriteResetTo(&sb)
 
 	// Assert.
-	claim.Equal(t, "When appending a cached reset sequence, the correct value is appended.", "\x1b[0m", sb.String(), AnsiEscapeSequence)
-}
-
-func Test_Sequence_WriteResetTo_Empty(t *testing.T) {
-	t.Parallel()
-
-	// Arrange.
-	var sb strings.Builder
-
-	seq := ansi.NewSequence(nil)
-
-	// Act.
-	seq.WriteResetTo(&sb)
-
-	// Assert.
-	claim.Equal(t, "When a cached sequence contains no codes, no reset sequence is appended.", "", sb.String(), AnsiEscapeSequence)
+	claim.Equal(t, "When appending a reset sequence to a non-empty builder, the correct value is appended.", "prefix:\x1b[0m", sb.String(), AnsiEscapeSequence)
 }
 
 func Test_Sequence_OpenLen(t *testing.T) {
@@ -245,10 +259,14 @@ func Test_Sequence_OpenLen(t *testing.T) {
 		inCodes []ansi.Code
 		want    int
 	}{
-		"When a cached sequence contains no codes, the opening length is correct.": {
+		"When a sequence contains no codes, the opening length is correct.": {
 			want: 0,
 		},
-		"When a cached sequence contains codes, the opening length is correct.": {
+		"When a sequence contains an empty code slice, the opening length is correct.": {
+			inCodes: []ansi.Code{},
+			want:    0,
+		},
+		"When a sequence contains codes, the opening length is correct.": {
 			inCodes: []ansi.Code{
 				ansi.Green,
 			},
@@ -275,10 +293,14 @@ func Test_Sequence_ResetLen(t *testing.T) {
 		inCodes []ansi.Code
 		want    int
 	}{
-		"When a cached sequence contains no codes, the reset length is correct.": {
+		"When a sequence contains no codes, the reset length is correct.": {
 			want: 0,
 		},
-		"When a cached sequence contains codes, the reset length is correct.": {
+		"When a sequence contains an empty code slice, the reset length is correct.": {
+			inCodes: []ansi.Code{},
+			want:    0,
+		},
+		"When a sequence contains codes, the reset length is correct.": {
 			inCodes: []ansi.Code{
 				ansi.Green,
 			},
@@ -298,7 +320,7 @@ func Test_Sequence_ResetLen(t *testing.T) {
 	}
 }
 
-func benchmark_AppendOpen(b *testing.B, codeCount int) {
+func benchmark_WriteOpenToFreshBuilder(b *testing.B, codeCount int) {
 	b.Helper()
 
 	codes := make([]ansi.Code, codeCount)
@@ -319,10 +341,21 @@ func benchmark_AppendOpen(b *testing.B, codeCount int) {
 	}
 }
 
-func Benchmark_AppendOpen_10Codes(b *testing.B)    { benchmark_AppendOpen(b, 10) }
-func Benchmark_AppendOpen_100Codes(b *testing.B)   { benchmark_AppendOpen(b, 100) }
-func Benchmark_AppendOpen_1000Codes(b *testing.B)  { benchmark_AppendOpen(b, 1000) }
-func Benchmark_AppendOpen_10000Codes(b *testing.B) { benchmark_AppendOpen(b, 10_000) }
+func Benchmark_WriteOpenToFreshBuilder_10Codes(b *testing.B) {
+	benchmark_WriteOpenToFreshBuilder(b, 10)
+}
+
+func Benchmark_WriteOpenToFreshBuilder_100Codes(b *testing.B) {
+	benchmark_WriteOpenToFreshBuilder(b, 100)
+}
+
+func Benchmark_WriteOpenToFreshBuilder_1000Codes(b *testing.B) {
+	benchmark_WriteOpenToFreshBuilder(b, 1000)
+}
+
+func Benchmark_WriteOpenToFreshBuilder_10000Codes(b *testing.B) {
+	benchmark_WriteOpenToFreshBuilder(b, 10_000)
+}
 
 func benchmark_NewSequence(b *testing.B, codeCount int) {
 	b.Helper()
