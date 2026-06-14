@@ -87,7 +87,7 @@ func Test_Equal_RenderValue(t *testing.T) {
 			fn: func(spy *tbSpy) {
 				claim.Equal(spy, testName, "hello", "world", label)
 			},
-			want: failureMessage("hello", "world"),
+			want: failureMessage(`"hello"`, `"world"`),
 		},
 		"When rendering a bool, the value is formatted correctly.": {
 			fn: func(spy *tbSpy) {

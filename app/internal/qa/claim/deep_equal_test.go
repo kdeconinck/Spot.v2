@@ -46,6 +46,27 @@ func Test_DeepEqual(t *testing.T) {
 			wantFatalfCalls: 1,
 			wantMsg:         "\n\nTest name:            Deep equality.\n\033[32mExpected (Structure): {ok [1 2]}\033[0m\n\033[31mActual (Structure):   {ok [1 3]}\033[0m\n\n",
 		},
+		"When both slices are nil, no failure is reported.": {
+			wantInput:       []int(nil),
+			gotInput:        []int(nil),
+			wantMsg:         "",
+			wantHelperCalls: 1,
+			wantFatalfCalls: 0,
+		},
+		"When both slices are empty, no failure is reported.": {
+			wantInput:       []int{},
+			gotInput:        []int{},
+			wantMsg:         "",
+			wantHelperCalls: 1,
+			wantFatalfCalls: 0,
+		},
+		"When one slice is nil and the other is empty, a failure is reported.": {
+			wantInput:       []int(nil),
+			gotInput:        []int{},
+			wantHelperCalls: 1,
+			wantFatalfCalls: 1,
+			wantMsg:         "\n\nTest name:            Deep equality.\n\033[32mExpected (Structure): []int(nil)\033[0m\n\033[31mActual (Structure):   []\033[0m\n\n",
+		},
 	} {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()

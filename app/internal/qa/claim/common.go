@@ -9,6 +9,7 @@ package claim
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -19,9 +20,7 @@ import (
 func fmtValue[T any](v T) string {
 	switch val := any(v).(type) {
 	case string:
-		quotedVal := strconv.Quote(val)
-
-		return quotedVal[1 : len(quotedVal)-1] // Remove the leading and the trailing quotes.
+		return strconv.Quote(val)
 
 	case bool:
 		return strconv.FormatBool(val)
@@ -66,6 +65,20 @@ func fmtValue[T any](v T) string {
 		return val.Error()
 
 	default:
+		rv := reflect.ValueOf(val)
+
+		if rv.IsValid() {
+			switch rv.Kind() {
+			case reflect.Slice, reflect.Map:
+				if rv.IsNil() {
+					return fmt.Sprintf("%T(nil)", val)
+				}
+
+			default:
+				return fmt.Sprint(val)
+			}
+		}
+
 		return fmt.Sprint(val)
 	}
 }
