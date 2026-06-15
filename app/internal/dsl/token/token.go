@@ -13,11 +13,3 @@ type Token struct {
 	Kind  Kind
 	Range position.Range
 }
-
-// New returns a token with kind and source range.
-func New(kind Kind, rangeInput position.Range) Token {
-	return Token{
-		Kind:  kind,
-		Range: rangeInput,
-	}
-}

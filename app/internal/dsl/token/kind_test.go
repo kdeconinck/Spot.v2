@@ -13,6 +13,11 @@ import (
 	"github.com/kdeconinck/spot/internal/qa/claim"
 )
 
+// Labels, used in the different assertion methods.
+const (
+	StringLabel = "String"
+)
+
 func Test_Kind_String(t *testing.T) {
 	t.Parallel()
 
