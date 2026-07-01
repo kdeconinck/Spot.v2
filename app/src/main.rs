@@ -6,6 +6,7 @@
 mod diagnostic;
 mod file;
 mod location;
+mod symbol;
 
 /// The main entry point for the application.
 /// This function is executed when the application is started.
