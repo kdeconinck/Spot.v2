@@ -2,13 +2,14 @@
 // == LICENSE:                 Copyright (c) 2026 Kevin De Coninck.
 // == SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 // =====================================================================================================================
-//! Source-location primitives shared by rSpot's pipeline.
-mod line_column;
-mod line_map;
-mod position;
-mod span;
+//! Line and column locations within source text.
 
-pub use line_column::LineColumn;
-pub use line_map::LineMap;
-pub use position::Position;
-pub use span::Span;
+/// A one-based line and column location in source text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LineColumn {
+    /// The one-based line number.
+    pub line: usize,
+
+    /// The one-based column number.
+    pub column: usize,
+}
