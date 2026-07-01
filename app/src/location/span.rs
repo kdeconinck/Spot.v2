@@ -2,11 +2,8 @@
 // == LICENSE:                 Copyright (c) 2026 Kevin De Coninck.
 // == SPDX-License-Identifier: LicenseRef-PolyForm-Noncommercial-1.0.0
 // =====================================================================================================================
-//! Source-location primitives shared by rSpot's pipeline.
-
-/// A zero-based byte offset in source text.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Position(pub usize);
+//! Byte ranges within source text.
+use super::Position;
 
 /// A half-open byte range in source text: `[start, end)`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
